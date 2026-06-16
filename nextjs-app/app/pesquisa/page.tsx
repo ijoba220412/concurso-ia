@@ -5,11 +5,38 @@ import Layout from '@/components/Layout'
 import { Search, Filter, X } from 'lucide-react'
 import Link from 'next/link'
 
+interface Filtros {
+  localidade: string
+  salarioMin: string
+  salarioMax: string
+  escolaridade: string[]
+  banca: string
+  status: string
+}
+
+interface Concurso {
+  id: string
+  titulo: string
+  orgao: string
+  banca_organizadora: string
+  data_publicacao: string
+  data_fim_inscricoes: string
+  vagas: Array<{
+    id: string
+    cargo: string
+    local_atuacao: string
+    salario: number
+    carga_horaria: number
+    nivel_escolaridade: string
+    numero_vagas: number
+  }>
+}
+
 export default function Pesquisa() {
   const [searchTerm, setSearchTerm] = useState('')
-  const [concursos, setConcursos] = useState([])
+  const [concursos, setConcursos] = useState<Concurso[]>([])
   const [loading, setLoading] = useState(false)
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<Filtros>({
     localidade: '',
     salarioMin: '',
     salarioMax: '',
@@ -20,8 +47,7 @@ export default function Pesquisa() {
   
   const fetchConcursos = async () => {
     setLoading(true)
-    try {
-      const params = new URLSearchParams({
+    try {      const params = new URLSearchParams({
         page: '1',
         ...(filters.localidade && { localidade: filters.localidade }),
         ...(filters.salarioMin && { salarioMin: filters.salarioMin }),
@@ -47,7 +73,8 @@ export default function Pesquisa() {
   
   const clearFilters = () => {
     setFilters({
-      localidade: '',      salarioMin: '',
+      localidade: '',
+      salarioMin: '',
       salarioMax: '',
       escolaridade: [],
       banca: '',
@@ -56,7 +83,20 @@ export default function Pesquisa() {
     setSearchTerm('')
   }
   
-  return (
+  const toggleEscolaridade = (nivel: string) => {
+    if (filters.escolaridade.includes(nivel)) {
+      setFilters({
+        ...filters,
+        escolaridade: filters.escolaridade.filter(n => n !== nivel)
+      })
+    } else {
+      setFilters({
+        ...filters,
+        escolaridade: [...filters.escolaridade, nivel]
+      })
+    }
+  }
+    return (
     <Layout>
       <div className="space-y-6">
         {/* Header */}
@@ -96,7 +136,8 @@ export default function Pesquisa() {
               
               {/* Localidade */}
               <div className="mb-5">
-                <label className="block text-sm font-medium text-gray-700 mb-2">                  Localidade
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Localidade
                 </label>
                 <select
                   value={filters.localidade}
@@ -104,10 +145,18 @@ export default function Pesquisa() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="">Todo o Brasil</option>
-                  <option value="SP">São Paulo</option>
-                  <option value="RJ">Rio de Janeiro</option>
+                  <option value="SP">São Paulo</option>                  <option value="RJ">Rio de Janeiro</option>
                   <option value="MG">Minas Gerais</option>
-                  {/* Adicionar mais estados */}
+                  <option value="RS">Rio Grande do Sul</option>
+                  <option value="PR">Paraná</option>
+                  <option value="SC">Santa Catarina</option>
+                  <option value="BA">Bahia</option>
+                  <option value="PE">Pernambuco</option>
+                  <option value="CE">Ceará</option>
+                  <option value="DF">Distrito Federal</option>
+                  <option value="GO">Goiás</option>
+                  <option value="PA">Pará</option>
+                  <option value="AM">Amazonas</option>
                 </select>
               </div>
               
@@ -122,14 +171,14 @@ export default function Pesquisa() {
                     placeholder="Mínimo"
                     value={filters.salarioMin}
                     onChange={(e) => setFilters({ ...filters, salarioMin: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   />
                   <input
                     type="number"
                     placeholder="Máximo"
                     value={filters.salarioMax}
                     onChange={(e) => setFilters({ ...filters, salarioMax: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
               </div>
@@ -145,19 +194,7 @@ export default function Pesquisa() {
                       <input
                         type="checkbox"
                         className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                        checked={filters.escolaridade.includes(nivel)}                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setFilters({
-                              ...filters,
-                              escolaridade: [...filters.escolaridade, nivel]
-                            })
-                          } else {
-                            setFilters({
-                              ...filters,
-                              escolaridade: filters.escolaridade.filter(n => n !== nivel)
-                            })
-                          }
-                        }}
+                        checked={filters.escolaridade.includes(nivel)}                        onChange={() => toggleEscolaridade(nivel)}
                       />
                       <span className="ml-2 text-sm text-gray-700">{nivel}</span>
                     </label>
@@ -173,13 +210,15 @@ export default function Pesquisa() {
                 <select
                   value={filters.banca}
                   onChange={(e) => setFilters({ ...filters, banca: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                 >
                   <option value="">Qualquer Banca</option>
                   <option value="Cebraspe">Cebraspe</option>
                   <option value="FGV">FGV</option>
                   <option value="Vunesp">Vunesp</option>
                   <option value="Cesgranrio">Cesgranrio</option>
+                  <option value="FCC">FCC</option>
+                  <option value="IBFC">IBFC</option>
                 </select>
               </div>
               
@@ -194,7 +233,8 @@ export default function Pesquisa() {
                       type="radio"
                       name="status"
                       value="aberto"
-                      checked={filters.status === 'aberto'}                      onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                      checked={filters.status === 'aberto'}
+                      onChange={(e) => setFilters({ ...filters, status: e.target.value })}
                       className="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500"
                     />
                     <span className="ml-2 text-sm text-gray-700">Aberto</span>
@@ -203,8 +243,7 @@ export default function Pesquisa() {
                     <input
                       type="radio"
                       name="status"
-                      value="previsto"
-                      checked={filters.status === 'previsto'}
+                      value="previsto"                      checked={filters.status === 'previsto'}
                       onChange={(e) => setFilters({ ...filters, status: e.target.value })}
                       className="w-4 h-4 text-primary-600 border-gray-300 focus:ring-primary-500"
                     />
@@ -221,7 +260,7 @@ export default function Pesquisa() {
               <p className="text-sm text-gray-600">
                 <strong>{concursos.length}</strong> resultados encontrados
               </p>
-              <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+              <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500">
                 <option>Ordenar por: Relevância</option>
                 <option>Maior Salário</option>
                 <option>Menor Salário</option>
@@ -233,13 +272,23 @@ export default function Pesquisa() {
               <div className="flex items-center justify-center h-64">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
               </div>
+            ) : concursos.length === 0 ? (
+              <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+                <Search className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Nenhum concurso encontrado
+                </h3>
+                <p className="text-gray-600">
+                  Tente ajustar os filtros ou buscar por outros termos.
+                </p>
+              </div>
             ) : (
               <div className="space-y-4">
-                {concursos.map((concurso: any) => (
+                {concursos.map((concurso) => (
                   <Link
                     key={concurso.id}
                     href={`/concursos/${concurso.id}`}
-                    className="block p-5 bg-white rounded-xl border border-gray-200 hover:shadow-soft transition-all"
+                    className="block p-5 bg-white rounded-xl border border-gray-200 hover:shadow-soft transition-all hover:border-primary-300"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -247,7 +296,7 @@ export default function Pesquisa() {
                         </h3>
                         <p className="text-sm text-gray-600 mb-3">{concurso.orgao}</p>
                         
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
+                        <div className="flex items-center gap-4 text-sm text-gray-600 flex-wrap">
                           <span>📍 {concurso.vagas?.[0]?.local_atuacao || 'Nacional'}</span>
                           <span>🎓 {concurso.vagas?.[0]?.nivel_escolaridade || 'N/A'}</span>
                           <span>⏰ {concurso.vagas?.[0]?.carga_horaria || 'N/A'}h/sem</span>
