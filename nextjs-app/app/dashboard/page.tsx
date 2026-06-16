@@ -11,6 +11,7 @@ interface Concurso {
   id: string
   titulo: string
   orgao: string
+  banca_organizadora: string
   data_publicacao: string
   data_fim_inscricoes: string
   vagas: Array<{
@@ -46,8 +47,8 @@ export default function Dashboard() {
     
     fetchData()
   }, [])
-  
-  if (loading) {    return (
+    if (loading) {
+    return (
       <Layout>
         <div className="flex items-center justify-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
@@ -95,8 +96,8 @@ export default function Dashboard() {
                 
                 <h3 className="font-semibold text-gray-900 mb-1">{concurso.titulo}</h3>
                 <p className="text-sm text-gray-600 mb-4">{concurso.orgao}</p>
-                
-                <div className="flex items-center justify-between text-sm">                  <span className="text-gray-500">
+                                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-500">
                     Vagas: {concurso.vagas?.[0]?.numero_vagas || 'N/A'}
                   </span>
                   <span className="font-semibold text-primary-600">
@@ -144,8 +145,8 @@ export default function Dashboard() {
         
         {/* Últimos Adicionados */}
         <section>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Últimos Adicionados</h2>
-                    <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Últimos Adicionados</h2>          
+          <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-200">
             {concursosRecentes.map((concurso) => (
               <Link
                 key={concurso.id}
